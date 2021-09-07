@@ -4,7 +4,7 @@ Pod::Spec.new do |spec|
   spec.summary      = "iOS 7 style Passcode Lock"
   spec.homepage     = "https://github.com/splitwise/LTHPasscodeViewController"
   spec.author       = { 'Roland Leth' => 'roland@leth.ro' }
-  spec.license      = { :type => 'MIT', :file => 'LICENSE' }
+  spec.license      = { :type => 'MIT', :file => 'LICENSE.txt' }
   spec.platform     = :ios, "10.3"
   spec.source       = { :git => "https://github.com/splitwise/LTHPasscodeViewController.git" }
   spec.source_files  = "README.md, CHANGELOG.md, LTHPasscodeViewController", "LTHPasscodeViewController/*.{h,m}"
