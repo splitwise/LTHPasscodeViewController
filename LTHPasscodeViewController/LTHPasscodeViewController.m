@@ -350,9 +350,11 @@ static const NSInteger LTHMaxPasscodeDigits = 10;
             if (error) {
                 return;
             }
-            
+
+            LTHAuthType authType = LTHAuthTypeTouchID;
             if (@available(iOS 11.0, *)) {
                 if (self.biometricsContext.biometryType == LABiometryTypeFaceID) {
+                    authType = LTHAuthTypeFaceID;
                     self.biometricsDetailsString = @"Unlock using Face ID";
                 }
             }
@@ -379,8 +381,8 @@ static const NSInteger LTHMaxPasscodeDigits = 10;
                                               dispatch_async(dispatch_get_main_queue(), ^{
                                                   [self _dismissMe];
                                                   
-                                                  if ([self.delegate respondsToSelector: @selector(passcodeWasEnteredSuccessfully)]) {
-                                                      [self.delegate performSelector: @selector(passcodeWasEnteredSuccessfully)];
+                                                  if ([self.delegate respondsToSelector: @selector(passcodeWasEnteredSuccessfully:)]) {
+                                                      [self.delegate passcodeWasEnteredSuccessfully:authType];
                                                   }
                                               });
                                               
@@ -1324,8 +1326,8 @@ static const NSInteger LTHMaxPasscodeDigits = 10;
         if ([typedString isEqualToString: savedPasscode]) {
             [self _dismissMe];
             _useFallbackPasscode = NO;
-            if ([self.delegate respondsToSelector: @selector(passcodeWasEnteredSuccessfully)]) {
-                [self.delegate performSelector: @selector(passcodeWasEnteredSuccessfully)];
+            if ([self.delegate respondsToSelector: @selector(passcodeWasEnteredSuccessfully:)]) {
+                [self.delegate passcodeWasEnteredSuccessfully:LTHAuthTypePasscode];
             }
         }
         else {
