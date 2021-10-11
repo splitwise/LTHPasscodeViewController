@@ -8,6 +8,13 @@
 
 #import <UIKit/UIKit.h>
 
+typedef NS_ENUM(NSInteger, LTHAuthType) {
+    LTHAuthTypeUnknown = -1,
+    LTHAuthTypePasscode = 0,
+    LTHAuthTypeTouchID = 1,
+    LTHAuthTypeFaceID = 2
+};
+
 @protocol LTHPasscodeViewControllerDelegate <NSObject>
 @optional
 /**
@@ -21,7 +28,7 @@
 /**
  @brief Called when the passcode was entered successfully.
  */
-- (void)passcodeWasEnteredSuccessfully;
+- (void)passcodeWasEnteredSuccessfully:(LTHAuthType)authType;
 /**
  @brief Called when the TouchID/FaceID fails or is cancelled.
  */
