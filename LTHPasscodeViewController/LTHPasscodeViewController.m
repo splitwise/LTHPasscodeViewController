@@ -93,6 +93,7 @@
 
 static const NSInteger LTHMinPasscodeDigits = 4;
 static const NSInteger LTHMaxPasscodeDigits = 10;
+static const NSInteger LTHNanosPerSecond = 1000000000; //10^9
 
 #pragma mark - Public, class methods
 + (BOOL)doesPasscodeExist {
@@ -110,7 +111,7 @@ static const NSInteger LTHMaxPasscodeDigits = 10;
 }
 
 
-+ (NSTimeInterval)timerStartTime {
++ (uint64_t)timerStartTime {
     return [[self sharedUser] _timerStartTime];
 }
 
@@ -204,7 +205,7 @@ static const NSInteger LTHMaxPasscodeDigits = 10;
 }
 
 
-- (NSTimeInterval)_timerStartTime {
+- (uint64_t)_timerStartTime {
     if (!_usesKeychain &&
         [self.delegate respondsToSelector:@selector(timerStartTime)]) {
         return [self.delegate timerStartTime];
@@ -214,10 +215,25 @@ static const NSInteger LTHMaxPasscodeDigits = 10;
     [LTHKeychainUtils getPasswordForUsername:_keychainTimerStartUsername
                               andServiceName:_keychainServiceName
                                        error:nil];
-    if (!keychainValue) return -1;
-    return keychainValue.doubleValue;
+    if (!keychainValue) return 0;
+    // Migration note: this was %.6f before and is now %llu
+    // longLongValue ignores anything after an initial integer part and
+    // produces 0 for unrecognized input, so should be ok with loading
+    // the old value. Randomized reference time will also make this
+    // initial load be treated as having an expired timer.
+    return keychainValue.longLongValue;
 }
 
+/*
+ The time returned for CLOCK_MONOTONIC_RAW is guaranteed to count up in
+ nanoseconds from the last time the device was booted, starting from a random
+ time and independent from user time changes and ntp adjustments. Only
+ suitable for comparison with itself, but will not produce the same value
+ N minutes from the last boot on device restart.
+ */
+- (uint64_t)monotonicSystemBootReferenceTimeNow {
+    return clock_gettime_nsec_np(CLOCK_MONOTONIC_RAW);
+}
 
 - (void)_saveTimerStartTime {
     if (!_usesKeychain &&
@@ -228,8 +244,8 @@ static const NSInteger LTHMaxPasscodeDigits = 10;
     }
     
     [LTHKeychainUtils storeUsername:_keychainTimerStartUsername
-                        andPassword:[NSString stringWithFormat: @"%.6f",
-                                     [NSDate timeIntervalSinceReferenceDate]]
+                        andPassword:[NSString stringWithFormat: @"%llu",
+                                     [self monotonicSystemBootReferenceTimeNow]]
                      forServiceName:_keychainServiceName
                      updateExisting:YES
                               error:nil];
@@ -242,15 +258,24 @@ static const NSInteger LTHMaxPasscodeDigits = 10;
         return [self.delegate didPasscodeTimerEnd];
     }
     
-    NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
-    // startTime wasn't saved yet (first app use and it crashed, phone force
-    // closed, etc) if it returns -1.
-    return now - [self _timerStartTime] >= [self _timerDuration]
-            || [self _timerStartTime] == -1
-            || now <= [self _timerStartTime];
-    // If the date was set in the past, this would return false.
-    // It won't register as false, even right as it is being enabled,
-    // because the saving alone takes 0.002+ seconds on a MBP 2.6GHz i7.
+    uint64_t now = [self monotonicSystemBootReferenceTimeNow];
+    // If _timerStartTime returns 0, it wasn't saved yet (first app
+    // use and it crashed, phone force closed, etc).
+    // If now is less than _timerStartTime, it's likely there was a device
+    // restart and the new reference time started "before" the start time.
+    if (now > [self _timerStartTime] && [self _timerStartTime] > 0) {
+        uint64_t interval = now - [self _timerStartTime];
+        
+        // now is after _timerStartTime and the start time is valid
+        // check to see if we're past the duration or not
+        return  (interval / LTHNanosPerSecond) >= [self _timerDuration];
+    } else {
+        // We were unable to perform any duration calculations, timer should
+        // be considered ended.
+        return true;
+    }
+    
+
 }
 
 
