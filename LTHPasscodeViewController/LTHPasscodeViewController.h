@@ -58,7 +58,7 @@ typedef NS_ENUM(NSInteger, LTHAuthType) {
  @details Called when @c +timerStartTime is called and @c +useKeychain:NO was used, but falls back to the Keychain anyway if not implemented.
  @return The time at which the timer started.
  */
-- (NSTimeInterval)timerStartTime;
+- (uint64_t)timerStartTime;
 /**
  @brief    Handle here the saving of the current time.
  @details  Called when @c +saveTimerStartTime is called and @c +useKeychain:NO was used, but falls back to the Keychain anyway if not implemented.
@@ -405,7 +405,7 @@ typedef NS_ENUM(NSInteger, LTHAuthType) {
  @brief  Retrieves from the keychain the time at which the timer started.
  @return The time, as @c timeIntervalSinceReferenceDate, at which the timer started.
  */
-+ (NSTimeInterval)timerStartTime;
++ (uint64_t)timerStartTime;
 /**
  @brief Saves the current time, as @c timeIntervalSinceReferenceDate.
  */
