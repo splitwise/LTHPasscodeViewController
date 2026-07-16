@@ -15,8 +15,15 @@
 #define LTHFailedAttemptLabelHeight [_failedAttemptLabel.text sizeWithAttributes: @{NSFontAttributeName : _labelFont}].height
 
 #ifndef LTHPasscodeViewControllerStrings
+#if SWIFT_PACKAGE
+// SPM places the copied .bundle inside the target's generated resource bundle,
+// so the resource lookup is rooted at SWIFTPM_MODULE_BUNDLE rather than the app main bundle.
+#define LTHPasscodeViewControllerStrings(key) \
+[[NSBundle bundleWithPath:[SWIFTPM_MODULE_BUNDLE pathForResource:@"LTHPasscodeViewController" ofType:@"bundle"]] localizedStringForKey:(key) value:@"" table:_localizationTableName]
+#else
 #define LTHPasscodeViewControllerStrings(key) \
 [[NSBundle bundleWithPath:[[NSBundle bundleForClass:[LTHPasscodeViewController class]] pathForResource:@"LTHPasscodeViewController" ofType:@"bundle"]] localizedStringForKey:(key) value:@"" table:_localizationTableName]
+#endif
 #endif
 
 // MARK: Please read
