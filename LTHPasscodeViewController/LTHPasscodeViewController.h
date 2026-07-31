@@ -7,6 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "LTHKeychainUtils.h"
 
 typedef NS_ENUM(NSInteger, LTHAuthType) {
     LTHAuthTypeUnknown = -1,
